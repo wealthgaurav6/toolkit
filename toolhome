@@ -1,0 +1,160 @@
+import React, { useEffect, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Sparkles, ShieldCheck, Settings, FileText, Lock, ScanLine, UploadCloud } from "lucide-react";
+import axios from "axios";
+import Dropzone from "react-dropzone";
+
+const sections = {
+  "Organize PDF": [
+    "Merge PDF", "Split PDF", "Remove Pages", "Extract Pages", "Organize Pages"
+  ],
+  "Convert TO PDF": [
+    "JPG to PDF", "WORD to PDF", "POWERPOINT to PDF", "EXCEL to PDF", "HTML to PDF"
+  ],
+  "Convert FROM PDF": [
+    "PDF to JPG", "PDF to WORD", "PDF to POWERPOINT", "PDF to EXCEL"
+  ],
+  "Edit PDF": [
+    "Rotate PDF", "Crop PDF", "Add Page Numbers", "Add Watermark", "Edit PDF (Text/Images)", "Redact PDF"
+  ],
+  "PDF Security": [
+    "Unlock PDF", "Protect PDF (Password)", "Sign PDF (Digital Signature)", "Secure Drop (Share PDFs Safely)"
+  ],
+  "Other Tools": [
+    "Compare PDF", "Optimize PDF", "Compress PDF", "Repair PDF", "OCR PDF", "PDF to PDF/A", "Scan to PDF"
+  ]
+};
+
+export default function PDFToolHome() {
+  const [loadingTool, setLoadingTool] = useState("");
+  const [selectedTool, setSelectedTool] = useState("");
+  const [file, setFile] = useState(null);
+  const [result, setResult] = useState(null);
+  const [xpPoints, setXpPoints] = useState(0);
+
+  const handleToolClick = (tool) => {
+    setSelectedTool(tool);
+    setResult(null);
+  };
+
+  const handleFileUpload = async (uploadedFile) => {
+    if (!uploadedFile || !selectedTool) return;
+
+    const formData = new FormData();
+    formData.append("file", uploadedFile);
+    formData.append("tool", selectedTool);
+
+    setLoadingTool(selectedTool);
+
+    try {
+      const response = await axios.post("/api/run-tool", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setResult(response.data);
+      setXpPoints(prev => prev + 10); // Award XP points on success
+    } catch (error) {
+      console.error("API Error:", error);
+    }
+
+    setLoadingTool("");
+    setSelectedTool("");
+  };
+
+  useEffect(() => {
+    // Load AdSense script
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js";
+    script.setAttribute("data-ad-client", "ca-pub-XXXXXXXXXXXXXXXX"); // Replace with your AdSense publisher ID
+    document.head.appendChild(script);
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-100 to-pink-200 p-6 text-center font-sans">
+      <h1 className="text-4xl md:text-5xl font-bold text-purple-800 mb-6 animate-fade-in">Your Gen Z PDF Toolkit 🚀</h1>
+      <div className="text-sm text-purple-700 mb-4">XP Points: <strong>{xpPoints}</strong></div>
+
+      {/* Google AdSense Ad Slot */}
+      <div className="mb-6 flex justify-center">
+        <ins className="adsbygoogle"
+          style={{ display: 'block', width: '100%', maxWidth: '728px', height: '90px' }}
+          data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" // Replace with your AdSense publisher ID
+          data-ad-slot="1234567890" // Replace with your AdSense slot ID
+          data-ad-format="auto"></ins>
+      </div>
+
+      <Tabs defaultValue="Organize PDF" className="w-full max-w-5xl mx-auto">
+        <TabsList className="grid grid-cols-2 md:grid-cols-3 gap-2">
+          {Object.keys(sections).map((category) => (
+            <TabsTrigger value={category} key={category} className="rounded-2xl bg-white shadow-md text-sm md:text-base hover:bg-purple-100">
+              {category}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        {Object.entries(sections).map(([category, tools]) => (
+          <TabsContent value={category} key={category} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
+            {tools.map((tool) => (
+              <Card key={tool} onClick={() => handleToolClick(tool)} className="bg-white hover:shadow-xl transition duration-300 cursor-pointer">
+                <CardContent className="p-4 text-purple-700 font-medium text-sm md:text-base">
+                  {loadingTool === tool ? "Processing..." : tool}
+                </CardContent>
+              </Card>
+            ))}
+          </TabsContent>
+        ))}
+      </Tabs>
+
+      {selectedTool && (
+        <div className="mt-6 max-w-lg mx-auto">
+          <Dropzone accept={{ 'application/pdf': ['.pdf'] }} onDrop={(acceptedFiles) => handleFileUpload(acceptedFiles[0])}>
+            {({ getRootProps, getInputProps }) => (
+              <div {...getRootProps()} className="border-2 border-dashed border-purple-400 p-6 rounded-xl bg-white hover:bg-purple-50 cursor-pointer">
+                <input {...getInputProps()} />
+                <p className="text-purple-600">Drag and drop a PDF file here, or click to upload</p>
+              </div>
+            )}
+          </Dropzone>
+        </div>
+      )}
+
+      {result && (
+        <div className="mt-8 p-4 bg-white rounded-xl shadow-lg max-w-2xl mx-auto text-left">
+          <h2 className="text-xl font-bold text-purple-800 mb-2">Result:</h2>
+          <p className="text-sm text-purple-700 mb-2">{result.message}</p>
+          {result.downloadUrl && (
+            <a href={result.downloadUrl} download className="inline-block mt-2 px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700">Download Processed PDF</a>
+          )}
+        </div>
+      )}
+
+      <div className="mt-12 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Feature icon={<Sparkles />} title="Custom & Cool UI" desc="Modern, vibrant, and fully customizable UI that vibes with Gen Z." />
+        <Feature icon={<ScanLine />} title="Mobile First" desc="100% responsive layout for seamless mobile experience." />
+        <Feature icon={<Settings />} title="Fast Performance" desc="Blazing fast tools with optimized performance." />
+        <Feature icon={<ShieldCheck />} title="Secure Sharing" desc="Encrypted and private PDF handling with Secure Drop." />
+        <Feature icon={<Lock />} title="Auto SEO" desc="Next-SEO & Sitemap Generator for automated optimization." />
+        <Feature icon={<FileText />} title="Gamification" desc="Engage users with achievements and interactive experiences." />
+      </div>
+
+      <footer className="mt-16 text-xs text-purple-600">
+        Built with 💜 using React + Tailwind + API-ready backend<br/>
+        Deploy this site easily on <a href="https://vercel.com" className="underline">Vercel</a> or <a href="https://www.netlify.com" className="underline">Netlify</a><br/>
+        Or integrate with WordPress/Blogger using iframe or WebView wrapper
+      </footer>
+    </div>
+  );
+}
+
+function Feature({ icon, title, desc }) {
+  return (
+    <div className="p-4 bg-white rounded-2xl shadow-md flex items-start gap-4 text-left">
+      <div className="text-purple-500 mt-1">{icon}</div>
+      <div>
+        <h3 className="text-lg font-semibold text-purple-800">{title}</h3>
+        <p className="text-sm text-purple-600">{desc}</p>
+      </div>
+    </div>
+  );
+}
